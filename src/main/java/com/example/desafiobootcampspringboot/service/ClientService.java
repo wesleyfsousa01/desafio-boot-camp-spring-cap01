@@ -9,6 +9,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.PathVariable;
+
+import java.util.Optional;
 
 @Service
 public class ClientService {
@@ -21,8 +24,9 @@ public class ClientService {
     }
 
     public Client findClientById(Long id){
-        Client client = clientRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Id not found" + id));
-        return client;
+       Optional<Client> client = clientRepository.findById(id);
+       Client entity = client.orElseThrow(() -> new ResourceNotFoundException("Id not found: " + id));
+        return entity;
     }
 
     @Transactional(readOnly = true)
@@ -32,14 +36,31 @@ public class ClientService {
     };
 
     @Transactional
-    public ClientDTO save(ClientDTO clientDto){
-        Client client = new Client();
-        client.setName(clientDto.getName());
-        client.setCpf(clientDto.getCpf());
-        client.setChildren(clientDto.getChildren());
-        client.setBirthDate(clientDto.getBirthDate());
-        client.setIncome(clientDto.getIncome());
-        return new ClientDTO(clientRepository.save(client));
+    public ClientDTO save(ClientDTO dto){
+        Client entity = new Client();
+        copyDtoToEntity(dto,entity);
+        return new ClientDTO(clientRepository.save(entity));
+    }
+
+    @Transactional
+    public ClientDTO update(@PathVariable Long id, ClientDTO dto){
+        Client entity = findClientById(id);
+        copyDtoToEntity(dto,entity);
+        return new ClientDTO(clientRepository.save(entity));
+    }
+
+    @Transactional
+    public void delete(Long id){
+        Client entity = findClientById(id);
+        clientRepository.delete(entity);
+    }
+
+    private void copyDtoToEntity(ClientDTO dto, Client entity){
+        entity.setName(dto.getName());
+        entity.setCpf(dto.getCpf());
+        entity.setBirthDate(dto.getBirthDate());
+        entity.setIncome(dto.getIncome());
+        entity.setChildren(dto.getChildren());
     }
 
 
